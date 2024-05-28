@@ -1,0 +1,48 @@
+USE adventureworks2019
+
+go
+
+--Get Immediate Components of the Product:
+SELECT PM.*,
+       PP.NAME AS ComponentName
+FROM   production.billofmaterials PM
+       JOIN production.product pp
+         ON PM.componentid = PP.productid
+WHERE  productassemblyid = 747
+       AND enddate IS NULL
+
+--2. Isolate the List of Components for Product 747:
+SELECT componentid
+FROM   production.billofmaterials
+WHERE  productassemblyid = 747
+       AND enddate IS NULL
+
+--3. Retrieve Rows Where These Components Appear as Assembly IDs:
+SELECT *
+FROM   production.billofmaterials
+WHERE  productassemblyid IN /* We use the previous query as a subquery*/
+       (SELECT componentid
+        FROM   production.billofmaterials
+        WHERE  productassemblyid = 747
+               AND enddate IS NULL)
+       AND enddate IS NULL
+
+--4. Append to the Previous Result:
+SELECT PM.*,
+       PP.NAME AS ComponentName
+FROM   production.billofmaterials PM
+       JOIN production.product pp
+         ON PM.componentid = PP.productid
+WHERE  productassemblyid = 747
+       AND enddate IS NULL
+UNION ALL
+SELECT PB.*,
+       PP.NAME AS ComponentName
+FROM   production.billofmaterials PB
+       JOIN production.product PP
+         ON PB.componentid = PP.productid
+WHERE  productassemblyid IN (SELECT componentid
+                             FROM   production.billofmaterials
+                             WHERE  productassemblyid = 747
+                                    AND enddate IS NULL)
+       AND enddate IS NULL 
